@@ -68,6 +68,28 @@ cd demo-airline-agent && .venv/bin/python demo.py
 - `policy.yaml` — dev-proxy policy (block competitor airlines, rephrase refunds)
 - `demo-run-final.log` — captured all-green run
 
+## Visualizing agents in the Agent Builder canvas
+
+The builder canvas (http://localhost:3000, backed by aiep-agent-builder on :8100)
+renders any agent that exists in its store. Three ways an agent gets there:
+
+1. **Draw it** — author the graph directly on the React Flow canvas.
+2. **POST it** — `POST /api/v1/systems` with graph JSON (what the canvas itself does;
+   this repo's scenario was created that way: 13 nodes, 13 edges).
+3. **Import it** — `import_manifest_to_builder.py` converts any Layer 6 registry
+   manifest into a canvas graph automatically: capabilities become delegated
+   sub-agents, `hitl_required`/`pii_risk`/`data_classification` become governance
+   nodes, `endpoint_url` becomes a REST tool, `input_schema` becomes the chat-input
+   node. Run:
+
+   ```bash
+   .venv/bin/python import_manifest_to_builder.py <path-to-manifest.json>
+   ```
+
+   This is the bridge that makes "create anywhere, visualize everywhere" true —
+   CLI-scaffolded (`asl new`) or registry-registered agents don't need to be
+   redrawn by hand to appear on the canvas.
+
 ## Honest limits
 
 - The LLM is mocked: answers are canned. Swap `AA_APIM_URL` to real APIM for real completions.
