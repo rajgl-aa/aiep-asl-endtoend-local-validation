@@ -1,0 +1,290 @@
+AA_SERVICES_KEY is not set — Model Axis and Prompt Sentinel calls will be sent WITHOUT an Apigee Bearer token and will fail with 401 behind the gateway. Set AA_SERVICES_KEY (provided by the AI Engineering team).
+AA_SERVICES_KEY is not set — Model Axis and Prompt Sentinel calls will be sent WITHOUT an Apigee Bearer token and will fail with 401 behind the gateway. Set AA_SERVICES_KEY (provided by the AI Engineering team).
+Flight Disruption Assistant — ASL all-layer local harness demo
+Services: {
+  "asldb": "http://localhost:8001",
+  "modelaxis": "http://localhost:8002",
+  "sentinel": "http://localhost:8003",
+  "policy": "http://localhost:8310",
+  "skills": "http://localhost:8311",
+  "gateway": "http://localhost:8312",
+  "tools": "http://localhost:8313",
+  "reviewer": "http://localhost:8314",
+  "mock_llm": "http://127.0.0.1:8765"
+}
+
+==========================================================================
+  L3  |  Skills Registry — discover 'rebook-passenger' invoke-spec
+==========================================================================
+    [
+      "policy-validated-demo",
+      "send-passenger-notification",
+      "rebook-passenger",
+      "lookup-loyalty-points",
+      "check-flight-status",
+      "baggage-trace"
+    ] 
+    ^ registered skills
+
+    {
+      "skill_id": "50878bb8-5115-41e2-bd47-ec46857b2464",
+      "name": "send-passenger-notification",
+      "version": "1.0.0",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "passenger_id",
+          "template_id",
+          "channel"
+        ],
+        "properties": {
+          "channel": {
+            "enum": [
+              "push",
+              "sms",
+              "email",
+              "all"
+            ],
+            "type": "string",
+            "description": "Delivery channel"
+          },
+          "priority": {
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "type": "string",
+            "default": "normal"
+          },
+          "template_id": {
+            "type": "string",
+          …(truncated) 
+    ^ invoke-spec: 50878bb8-5115-41e2-bd47-ec46857b2464
+
+✅ L3 Skills Registry: OK
+
+==========================================================================
+  L3  |  Policy Engine — evaluate passenger message (expect allow)
+==========================================================================
+    {
+      "version_hash": "55143167b439ed7d",
+      "last_updated": "2026-09-06T21:18:12.318247Z",
+      "active_policy_count": 2,
+      "hint": "Re-fetch bundle if version_hash differs from your cached value"
+    } 
+    ^ policy bundle version
+
+    {
+      "surface": "input",
+      "team_id": null,
+      "agent_id": null,
+      "triggered": [],
+      "skipped": [
+        {
+          "policy_id": "a26608d3-0f9f-4c0c-8234-bdb574827877",
+          "policy_name": "Emergency Stop \u2014 Kill Switch",
+          "policy_scope": "org",
+          "policy_status": null,
+          "rule_id": "emergency-001",
+          "surface": "input",
+          "action": "block",
+          "priority": 1,
+          "condition": "context.emergency_stop == True",
+          "description": "Emergency kill switch \u2014 blocks ALL agent input when emergency_stop flag is set",
+          "matched": false,
+          "fail_safe": "fail_closed",
+          "locked": true
+        },
+        {
+          "policy_id": "50b3c8be-ef3f-46e2-9280-96c96a93df6d",
+         …(truncated) 
+    ^ evaluate: passenger rebooking request (AA-related)
+
+    {
+      "surface": "input",
+      "team_id": null,
+      "agent_id": null,
+      "triggered": [
+        {
+          "policy_id": "50b3c8be-ef3f-46e2-9280-96c96a93df6d",
+          "policy_name": "HV Skills Universal Laws",
+          "policy_scope": "org",
+          "policy_status": null,
+          "rule_id": "law-004",
+          "surface": "input",
+          "action": "block",
+          "priority": 2,
+          "condition": "input.is_aa_related == False",
+          "description": "Block queries not related to American Airlines services",
+          "matched": true,
+          "fail_safe": "fail_closed",
+          "locked": false
+        }
+      ],
+      "skipped": [
+        {
+          "policy_id": "a26608d3-0f9f-4c0c-8234-bdb574827877",
+          "policy_name": "Emergency Stop \u2014 Kil …(truncated) 
+    ^ evaluate: competitor-airline query (expect BLOCK)
+
+✅ L3 Policy Engine: OK
+
+==========================================================================
+  L7  |  aa-agent-tools — fuel-burn-estimator via governance pipeline
+==========================================================================
+    [
+      "fuel-burn-estimator"
+    ] 
+    ^ registered tools (crewops)
+
+    {
+      "execution_id": "939c62d5-1dcc-4052-b9da-425751bd7c89",
+      "tool_id": "c51ea403-e6f8-4d7c-bf53-8322d701d1df",
+      "tool_version": "1.0.0",
+      "outcome": "SUCCESS",
+      "policy_decision": "ALLOW",
+      "output": {
+        "_mock": true,
+        "tool": "crewops.fuel-burn-estimator",
+        "version": "1.0.0",
+        "echo": {
+          "aircraft_type": "B787-9",
+          "distance_nm": 1235,
+          "payload_kg": 42000
+        },
+        "answer": "ok",
+        "_sandbox_env_keys": []
+      },
+      "latency_ms": 20,
+      "cold_start_ms": 50,
+      "scan_proofs": {
+        "input_pii": "SKIPPED",
+        "output_pii": "SKIPPED",
+        "injection": "SKIPPED",
+        "exfiltration": "SKIPPED"
+      },
+      "sandbox_session_id": "mock-541209a7-ac2f-4db0-94b4-9a0c414c5e …(truncated) 
+    ^ fuel-burn-estimator invoke (policy+audit)
+
+✅ L7 Tool Governance: OK
+
+==========================================================================
+  L2  |  Federated retrieval — SDK LTM write, gateway semantic recall
+==========================================================================
+    {
+      "fact_id": "eac13517-8f0f-48d3-a8ce-5ae378b79daf",
+      "note": "row lands quarantined (pii_scanned=false) without the Azure PII scanner \u2014 fail-safe"
+    } 
+    ^ LTM write via aa-agent-data SDK
+
+✅ L2 Memory write (SDK): OK
+    {
+      "results": [
+        {
+          "chunk": {
+            "content": "[PII_SCAN_UNAVAILABLE]",
+            "source": "ltm:286c3547-ad83-40f5-9887-515f8ac161ae",
+            "metadata": {
+              "key": "disruption_policy_rebooking",
+              "fact_id": "286c3547-ad83-40f5-9887-515f8ac161ae",
+              "agent_id": "aa-disruption-pe-hooked",
+              "importance_score": 0.7058721119447323
+            },
+            "schema_version": "1.0",
+            "pii_scanned": false,
+            "token_count": null
+          },
+          "source_store": "ltm",
+          "store_rank": 1,
+          "rrf_score": 0.02459016393442623,
+          "retrieval_trace_id": "df249af1-2bfa-443d-824a-fe1d502a1241"
+        },
+        {
+          "chunk": {
+            "content": "[PII …(truncated) 
+    ^ federated retrieve (RRF + provenance)
+
+✅ L2 Federated retrieve: OK
+
+==========================================================================
+  L1  |  Sentinel → Model Axis → mock LLM → demask (aa-agent-client)
+==========================================================================
+    "Here is mock flight information: Flight AA123 departs DFW at 08:00, arrives LAX at 10:30. [MOCK RESPONSE \u2014 dev proxy active]" 
+    ^ LLMClient.complete() — text (demasked)
+
+    {
+      "model_used": "gpt-5-nano",
+      "deployment_name": "gpt-5-nano",
+      "provider": "azure_openai",
+      "cost_usd": 0.00020675
+    } 
+    ^ routing + usage
+
+✅ L1 Pipeline (aa-agent-client): OK
+
+==========================================================================
+  L4  |  aa-agent-sdk — ChainOfThoughtAgent w/ real L1 client (DI seam)
+==========================================================================
+2026-09-06 16:50:36 [warning  ] ASL_LOCAL_DEV detected — local dev mode will activate
+[ASL] LOCAL DEV MODE ACTIVE — HiddenLayer DISABLED, OTel→console
+2026-09-06 16:50:36 [info     ] hook_engine_init               domain_count=0 platform_count=0
+    {
+      "status": "success",
+      "output": "This is a mock LLM response from the ASL local dev proxy. No real model was called. Configure policy YAML to test guardrails."
+    } 
+    ^ ChainOfThoughtAgent.ainvoke()
+
+✅ L4 Agent SDK: OK
+
+==========================================================================
+  L6  |  Agent Registry + Marketplace Reviewer
+==========================================================================
+    {
+      "manifest": "Flight Disruption Assistant",
+      "valid": true
+    } 
+    ^ manifest schema validation
+
+✅ L6 Registry (manifest): OK
+    {
+      "decision": "approved",
+      "confidence": 0.5,
+      "feedback": "demo-review-value",
+      "findings": [],
+      "security_summary": "demo-review-value",
+      "security_risk_level": "low",
+      "has_security_concerns": false,
+      "governance_status": "pass",
+      "governance_summary": "demo-review-value",
+      "has_governance_concerns": false,
+      "content_guardrail_injection_detected": false,
+      "duplicate_detection": {
+        "checked": false,
+        "is_duplicate": false,
+        "matched_agent_id": null,
+        "matched_agent_name": null,
+        "matched_agent_tools": [],
+        "matched_primary_functionality": null,
+        "similarity_score": null,
+        "reason": "Azure AI Search not configured \u2014 dedup check skipped."
+      }
+    } 
+    ^ reviewer verdict
+
+✅ L6 Reviewer Agent: OK
+
+==========================================================================
+  SUMMARY  |  
+==========================================================================
+  OK    L3 Skills Registry
+  OK    L3 Policy Engine
+  OK    L7 Tool Governance
+  OK    L2 Memory write (SDK)
+  OK    L2 Federated retrieve
+  OK    L1 Pipeline (aa-agent-client)
+  OK    L4 Agent SDK
+  OK    L6 Registry (manifest)
+  OK    L6 Reviewer Agent
+
