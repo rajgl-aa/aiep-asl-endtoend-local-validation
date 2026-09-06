@@ -1,0 +1,79 @@
+{
+  "name": "Flight Disruption Assistant",
+  "description": "Airline operations assistant that helps passengers and agents during flight disruptions. Rebooks passengers on cancelled or delayed flights, traces delayed or mishandled baggage, and sends proactive disruption notifications with updated itinerary details.",
+  "version": "1.0.0",
+  "owner_team": "AIEP Core",
+  "accountable_owner": "aiep@aa.com",
+  "capabilities": [
+    "flight-disruption",
+    "passenger-rebooking",
+    "baggage-tracing",
+    "customer-notification"
+  ],
+  "sla_tier": "committed",
+  "sla_targets": {
+    "p95_ms": 8000,
+    "availability": 99.9
+  },
+  "data_classification": "confidential",
+  "pii_risk": "high",
+  "hosted_externally": false,
+  "hitl_required": true,
+  "endpoint_url": "https://aiep-agent-flight-disruption-nonprod.cloud.aa.com",
+  "try_it_enabled": false,
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "record_locator": {
+        "type": "string",
+        "description": "6-character passenger record locator (PNR)"
+      },
+      "disruption_type": {
+        "type": "string",
+        "enum": ["cancellation", "delay", "misconnection", "baggage"],
+        "description": "Type of disruption being handled"
+      },
+      "flight_number": {
+        "type": "string",
+        "description": "Operated flight number, e.g. AA1234"
+      },
+      "flight_date": {
+        "type": "string",
+        "format": "date",
+        "description": "Scheduled date of the disrupted flight"
+      },
+      "notification_channel": {
+        "type": "string",
+        "enum": ["email", "sms", "push", "none"],
+        "default": "none",
+        "description": "Channel for proactive passenger notification"
+      }
+    },
+    "required": ["record_locator", "disruption_type", "flight_number", "flight_date"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "rebooking_options": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "flight_number": { "type": "string" },
+            "departure_time": { "type": "string" },
+            "arrival_time": { "type": "string" },
+            "cabin": { "type": "string" },
+            "available": { "type": "boolean" }
+          }
+        }
+      },
+      "selected_option": { "type": "string" },
+      "baggage_status": { "type": "string" },
+      "notification_sent": { "type": "boolean" },
+      "summary": { "type": "string" }
+    },
+    "required": ["summary"]
+  },
+  "mcp_dependencies": [],
+  "runtime_notes": "HITL confirmation required before final rebooking is committed to the PNR. Baggage tracing calls internal WorldTracer-compatible services. Average latency ~3s; p95 8s during irregular operations (IROPS) surges."
+}

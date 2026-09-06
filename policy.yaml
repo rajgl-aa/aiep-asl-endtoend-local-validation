@@ -1,0 +1,9 @@
+input_rules:
+  - id: block-competitor-airlines
+    pattern: "united airlines|delta airlines"
+    action: block
+    description: Block mentions of competitor airlines
+  - id: rephrase-refund
+    pattern: "refund"
+    action: rephrase
+    description: Rephrase refund-related prompts
