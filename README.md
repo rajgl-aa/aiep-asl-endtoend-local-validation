@@ -68,6 +68,13 @@ cd demo-airline-agent && .venv/bin/python demo.py
 - `policy.yaml` — dev-proxy policy (block competitor airlines, rephrase refunds)
 - `demo-run-final.log` — captured all-green run
 
+## Visual proof
+
+| Artifact | What it shows |
+|---|---|
+| `demo-run-final.log` | Captured all-green run — all 10 layer checks (L1–L7) in one execution |
+| `docs/images/canvas-graph.png` | The same agent on the Agent Builder canvas: chat-input → root agent → 3 sub-agents (Flight Ops / Baggage / Loyalty, each with its own model) → REST/MCP/RAG/memory tools, with Human Approval, Data Policy, Egress Control and Audit Logging wired as governance nodes |
+
 ## Visualizing agents in the Agent Builder canvas
 
 The builder canvas (http://localhost:3000, backed by aiep-agent-builder on :8100)
